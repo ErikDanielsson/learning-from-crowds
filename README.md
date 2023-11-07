@@ -1,1 +1,1 @@
-# learning-from-crowds
+# Learning from crowds
