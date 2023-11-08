@@ -1,17 +1,35 @@
 
 set.seed(136)
+library(geometry)
 
-rmixnorm <- function(N, m1, m2, s1, s2, t){
-  ind <- I(runif(N) > t)
-  X <- rep(0,N)
-  X[ind] <- rnorm(sum(ind), m1, s1)
-  X[!ind] <- rnorm(sum(!ind), m2, s2)
-  return(X)
+generate_data <- function(N,w){
+   X_1 = runif(N, 0, 1)
+   X_2 = runif(N, 0, 1)
+   Y = rep(0,N)
+   w_matrix = matrix(rep(w, N), nrow=2)
+   Y = as.numeric(I(dot(w_matrix,matrix(c(X_1,X_2), nrow=2, byrow=TRUE)) >= 0)) 
+   return(data.frame(X_1,X_2,Y))
 }
 
-dmixnorm <- function(x, m1, m2, s1, s2, t){
-  y <- (1-t)*dnorm(x,m1,s1) + t*dnorm(x,m2,s2)
-  return(y)
+generate_expert <- function(df, alpha, beta){
+  expert_df = data.frame()
+  for (i in 1:nrow(df)){
+    y_i = c()
+    if(df$Y[i]==1){
+      for (j in 1:length(alpha)){
+        y_j = rbern(1,alpha[j])
+        y_i = append(y_i, y_j)
+      }
+    }
+    else{
+      for (j in 1:length(beta)){
+            y_j = rbern(1,1-beta[j])
+            y_i = append(y_i, y_j)
+      }
+    }
+    expert_df = rbind(expert_df, data.frame(y_i))
+  }
+  return(cbind(df,expert_df))
 }
 
 em_alg_gmm <- function(x, m1_est, m2_est, s1_est, s2_est, t_est) {
@@ -34,19 +52,21 @@ em_alg_gmm <- function(x, m1_est, m2_est, s1_est, s2_est, t_est) {
   return(c(m1_est, m2_est, s1_est, s2_est, t_est))
 }
 
-n = 2000
-mu1 = 2
-mu2 = 5
-sigma1 = 5
-sigma2 = 3
-tau = 0.3
+# n = 2000
+# mu1 = 2
+# mu2 = 5
+# sigma1 = 5
+# sigma2 = 3
+# tau = 0.3
 
-X = rmixnorm(n, mu1, mu2, sigma1, sigma2, tau)
+# mu1_est = 1
+# mu2_est = 4
+# sigma1_est = 100
+# sigma2_est = 2
+# tau_est = 0.2
 
-mu1_est = 1
-mu2_est = 4
-sigma1_est = 100
-sigma2_est = 2
-tau_est = 0.2
+# theta = em_alg_gmm(X, mu1_est, mu2_est, sigma1_est, sigma2_est, tau_est)
 
-theta = em_alg_gmm(X, mu1_est, mu2_est, sigma1_est, sigma2_est, tau_est)
+w = c(-1,1)
+data = generate_data(10,w)
+df = generate_expert(data,1,0)
