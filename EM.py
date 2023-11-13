@@ -42,31 +42,39 @@ def H(w, X, N):
     )
 
 
-def EM(X, advice):
+def EM(X, y):
     N, n_features = X.shape
-    n_experts = advice.shape[1]
+    n_experts = y.shape[1]
     w = np.zeros(n_features)
     # Majority voting for initalization
-    alpha = np.random.rand(n_experts)
-    beta = np.random.rand(n_experts)
+    mu = np.zeros(N)
+    for i in range(N):
+        mu[i] = 1 / n_experts * sum(y[i, :])
+
+    alpha = np.zeros(n_experts)
+    beta = np.zeros(n_experts)
+    for j in range(n_experts):
+        alpha[j] = sum(mu[i] * y[i, j] for i in range(N)) / sum(mu)
+        beta[j] = sum((1 - mu[i]) * (1 - y[i, j]) for i in range(N)) / (
+            N - sum(mu)
+        )
     eta = 0.01 * np.ones(n_features)
     for _ in range(100):
         # E-step
         p = np.zeros(N)
         a = np.zeros(N)
         b = np.zeros(N)
-        mu = np.zeros(N)
-        for i in range(N):
+        for i in range(N)
             p[i] = sigmoid(np.dot(w, X[i, :]))
-            a[i] = np.prod(
+            a[i] = np.prod( 
                 [
-                    alpha[j] if advice[i, j] == 1 else 1 - alpha[j]
+                    alpha[j] if y[i, j] == 1 else 1 - alpha[j]
                     for j in range(n_experts)
                 ]
             )
             b[i] = np.prod(
                 [
-                    beta[j] if advice[i, j] == 0 else 1 - beta[j]
+                    beta[j] if y[i, j] == 0 else 1 - beta[j]
                     for j in range(n_experts)
                 ]
             )
@@ -75,8 +83,8 @@ def EM(X, advice):
         # M-step
         # For the analytical parameters
         for j in range(n_experts):
-            alpha[j] = sum(mu[i] * advice[i, j] for i in range(N)) / sum(mu)
-            beta[j] = sum((1 - mu[i]) * (1 - advice[i, j]) for i in range(N)) / (
+            alpha[j] = sum(mu[i] * y[i, j] for i in range(N)) / sum(mu)
+            beta[j] = sum((1 - mu[i]) * (1 - y[i, j]) for i in range(N)) / (
                 N - sum(mu)
             )
         # Newton-Raphon for the logistic regression
