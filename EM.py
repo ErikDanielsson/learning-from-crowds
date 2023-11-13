@@ -51,6 +51,7 @@ def EM(X, y, epsilon_tot, epsilon_log):
     w = np.zeros(n_features)
     # Majority voting for initalization
     mu = np.zeros(N)
+    l_obs_prev = -10000000
     for i in range(N):
         mu[i] = 1 / R * sum(y[i, :])
 
@@ -73,6 +74,10 @@ def EM(X, y, epsilon_tot, epsilon_log):
             )
             b[i] = np.prod([beta[j] if y[i, j] == 0 else 1 - beta[j] for j in range(R)])
             mu[i] = a[i] * p[i] / (a[i] * p[i] + b[i] * (1 - p[i]))
+        l_obs = sum( np.log((a[i] * p[i]) + b[i]*(1-p[i])) for i in range(N))
+        if (l_obs - l_obs_prev < epsilon_tot):
+            break
+        l_obs_prev = l_obs
 
         # M-step
         # For the analytical parameters
