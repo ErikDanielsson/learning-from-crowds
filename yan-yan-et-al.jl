@@ -8,20 +8,20 @@ function yit_estimate(yit, xi, wt, γt)
     return 1 - ξ(xi, wt, γt) ? yit == 0 : ξ(xi, wt, γt)
 end
 
-function p_tilde(xi, yi, w, γ, α, β)
+function p_tilde(xi, yi, w, α, β)
     p = 1
     z_factor = ξ(xi, α, β)
     for t in eachindex(yi)
-        wt = w[t, :]
-        γt = γ[t, :]
+        wt = w[t, 1:end-1]
+        γt = w[t, end]
         yit = y[t]
         p *= yit_estimate(yit, xi, wt, γt) * z_factor
     end
     return p
 end
 
-function Δp_tilde(xi, yi, w, γ, α, β)
-    p = p_tilde(xi, yi, w, γ, α, β)
+function Δp_tilde(xi, yi, w, α, β)
+    p = p_tilde(xi, yi, w, α, β)
     return 2p - 1
 end
 
@@ -33,12 +33,12 @@ function ∂f∂αβ(x, yit, wt, γt, α, β)
         xi = ones(α_length + 1)
         xi[1:α_length] = x[i, :]
         p = Δp(xi, yit, wt, γt, α, β)
-        s += p * ∂ξ(xi, α, β) * xi
+        s += p * ξ(xi, α, β) * (ξ(xi, α, β)) * xi
     return s
 end
 
 function ∂f∂ηt(xi, yit, wt, γt, α, β)
-    return ((-1) ? yit == 1 : 1) * (1 - Δp(xi, yit, wt, γt, α, β))
+    return ((-1) ? yit == 1 : 1) * ( - Δp(xi, yit, wt, γt, α, β))
 end
 
 # In the same manner as above, we bundle together the gradient expressions for w and γ
@@ -53,7 +53,19 @@ function ∂f∂wγt(x, yt, wt, γt, α, β)
     return s
 end
 
-function f(x, y, w, γ, α, β) 
+function f(x, y, θ)
+    N, D = size(x)
+    N, T = size(y)
+    wγ = zeros(T, D+1)
+    αβ = zeros(D+1)
+    αβ[:] = θ[1:(D+1)]
+    for t in 1:T
+        wγ[t+1, :] = θ[1+t*(D+1):(t+1)*(D+1)]
+    end
+    return fopt
+end
+
+function fopt(x, y, w, α) 
     N, D = size(x)
     N, T = size(y)
     l = 0
@@ -63,8 +75,8 @@ function f(x, y, w, γ, α, β)
         classifier_eval = ξ(xi, w, b)
         zprob_eval = p_tilde(xi, yi, w, γ, α, β) 
         for t in 1:T
-            wt = w[t, :]
-            γt = γ[t, :]
+            wt = w[t, 1:end-1]
+            γt = w[t, end]
             yit = yi[t]
             yit_eval = yit_estimate(yit, xi, wt, γt)
             # Contribution corresponding to z = 1
@@ -75,9 +87,6 @@ function f(x, y, w, γ, α, β)
     end
     return l
 end
-
-α_length = 1
-wt_length = 1
 
 function gradient!(storage, x)
     # Compute indicies for the differenr parameters
