@@ -61,7 +61,9 @@ def EM(X, y, epsilon_tot, epsilon_log):
         alpha[j] = sum(mu[i] * y[i, j] for i in range(N)) / sum(mu)
         beta[j] = sum((1 - mu[i]) * (1 - y[i, j]) for i in range(N)) / (N - sum(mu))
     eta = 0.01
-    for _ in range(10000):
+    for k in range(10000):
+        if k % 10 == 0:
+            print(f"Iteration {k}")
         # E-step
         p = np.zeros(N)
         a = np.zeros(N)
@@ -95,16 +97,18 @@ def EM(X, y, epsilon_tot, epsilon_log):
     return alpha, beta, w
 
 
-w = np.array([1, -2])
-x, y = generate_data(1000, w)
-advice = expert_advice(y, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
+w_real = np.array([1, -1])
+x, y = generate_data(1000, w_real)
+advice = expert_advice(y, [0.9, 0.9, 0.7], [0.8, 0.7, 0.8])
+alpha, beta, w = EM(x, advice, 1e-6, 1e-6)
+print(alpha, beta, w)
 positive = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 1])
 negative = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 0])
 plt.scatter(positive[:, 0], positive[:, 1])
 plt.scatter(negative[:, 0], negative[:, 1])
 rot90 = np.array([[0, -1], [1, 0]])
-l = rot90 @ w
-plt.plot(np.linspace(0, 1, 100), l[1] / l[0] * np.linspace(0, 1, 100))
+l_real = rot90 @ w_real
+l_est = rot90 @ w
+plt.plot(np.linspace(0, 1, 100), l_real[1] / l_real[0] * np.linspace(0, 1, 100))
+plt.plot(np.linspace(0, 1, 100), l_est[1] / l_est[0] * np.linspace(0, 1, 100))
 plt.show()
-alpha, beta, w = EM(x, advice, 1e-6, 1e-6)
-print(alpha, beta, w)
