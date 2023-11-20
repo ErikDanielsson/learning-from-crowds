@@ -14,6 +14,12 @@ def yit_estimate(yit, xi, v):
     return 1 - dot_sigmoid(xi, v) if yit == 0 else dot_sigmoid(xi, v)
 
 
+def yit_est_gauss(yit,xi,v):
+    sigma = dot_sigmoid(xi,v) 
+    const = 1 / ( sigma * np.sqrt(2*np.pi) )
+    return const * np.exp(1 / sigma^2) if y == 1 else const * np.exp(-1/( 2 * sigma^2 ))
+
+
 def calc_p_tilde(xi, yi, v, a):
     p = 1
     z_factor = dot_sigmoid(xi, a)
@@ -21,7 +27,7 @@ def calc_p_tilde(xi, yi, v, a):
         yit = yi[t]
         p *= yit_estimate(yit, xi, v) * z_factor
     return p
-
+# should we change this ^ to be flexible to bernoulli or gaussian?
 
 def partial_f_partial_a(xi, pi, a):
     a_len = len(a)
@@ -45,6 +51,11 @@ def partial_eta_t_v(xi, v):
     xi_n_one[:-1] = xi
     s_eval = dot_sigmoid(xi, v)
     return s_eval * (1 - s_eval) * xi_n_one
+
+
+def partial_f_partial_sigma_t(yit, pi, xi, v):
+    sigma = dot_sigmoid(xi,v)
+    return (1 - pi) / sigma^3 - 1/sigma if y==1 else pi / sigma^3 - 1/sigma
 
 
 def grad_f_opt(x, y, p_tilde, v, a):
