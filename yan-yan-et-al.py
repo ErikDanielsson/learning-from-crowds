@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.optimize
 
 
 def generate_data(N, w):
@@ -78,14 +79,15 @@ def H(w, X, N):
 
 def log_loss(y, x, w):
     return -sum(
-        y[i] * np.log(sigmoid(np.dot(w, x[i, :])))
-        + (1 - y[i]) * np.log(1 - sigmoid(np.dot(w, x[i, :])))
-        for i in len(y)
+        y[i] * np.log(dot_sigmoid(x[i, :], w))
+        + (1 - y[i]) * np.log(1 - dot_sigmoid(x[i, :], w))
+        for i in range(len(y))
     )
 
 
 def gradient_log_loss(y, x, w):
-    return -sum(x[i, :] * (y[i] - sigmoid(np.dot(w, x[i]))) for i in range(len(y)))
+    x_1 = np.hstack((x, np.ones((x.shape[0], 1))))
+    return -sum(x_1[i, :] * (y[i] - dot_sigmoid(x[i, :], w)) for i in range(len(y)))
 
 
 def soft_lab(yit, p_tilde):
@@ -116,7 +118,27 @@ def EM(x, y, epsilon_tot, epsilon_log):
                 soft_label[i, t] = soft_lab(yit, p_ti)
 
         # M-step
+        a_new = scipy.optimize.minimize(
+            lambda w: log_loss(p_tilde, x, w),
+            a_new,
+            jac=lambda w: gradient_log_loss(p_tilde, x, w),
+            method="BFGS",
+        ).x
+        a_new /= a_new[0]
+        for t in range(T):
+            v[t, :] = scipy.optimize.minimize(
+                lambda w: log_loss(soft_label[:, t], x, w),
+                v[t, :],
+                jac=lambda w: gradient_log_loss(soft_label[:, t], x, w),
+                method="BFGS",
+            ).x
+            v[t, :] /= v[t, 0]
+
+        print(a)
+        print(v)
+        """
         for _ in range(1000):
+
             h = H(a, x_1, N)
             new_a = a - gamma * np.linalg.inv(h) @ g(a, p_tilde, x_1, N)
             new_a /= np.linalg.norm(new_a)
@@ -135,22 +157,22 @@ def EM(x, y, epsilon_tot, epsilon_log):
                     break
                 v[t, :] = new_v
             v[t, :] /= v[t, 0]
-            print(v)
+        """
     return a, v
 
 
-w_real = np.array([1, -1])
-x, y = generate_data(1000, w_real)
-advice = expert_advice(y, x, np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]))
-alpha, beta, w = EM(x, advice, 1e-3, 1e-3)
-print(alpha, beta, w)
+w_real = np.array([1, -2])
+x, y = generate_data(10000, w_real)
+advice = expert_advice(y, x, np.array([[1, 1, 1], [1, 1, 1], [1, 1, 200]]))
+a, v = EM(x, advice, 1e-6, 1e-6)
+print(a, v)
 positive = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 1])
 negative = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 0])
 plt.scatter(positive[:, 0], positive[:, 1])
 plt.scatter(negative[:, 0], negative[:, 1])
 rot90 = np.array([[0, -1], [1, 0]])
 l_real = rot90 @ w_real
-l_est = rot90 @ w
+l_est = rot90 @ a[0:2]
 plt.plot(np.linspace(0, 1, 100), l_real[1] / l_real[0] * np.linspace(0, 1, 100))
 plt.plot(np.linspace(0, 1, 100), l_est[1] / l_est[0] * np.linspace(0, 1, 100))
 plt.show()
