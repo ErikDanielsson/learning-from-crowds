@@ -57,14 +57,14 @@ def calc_p_tilde(xi, yi, v, a):
     return p
 
 
-def g(w, mu, X, N, D):
-    return sum((mu[i] - sigmoid(np.dot(w[:D], X[i, :]))) * X[i, :] for i in range(N))
+def g(w, mu, X, N):
+    return sum((mu[i] - sigmoid(np.dot(w, X[i, :]))) * X[i, :] for i in range(N))
 
 
-def H(w, X, N, D):
+def H(w, X, N):
     return -sum(
-        sigmoid(np.dot(w[:D], X[i, :]))
-        * (1 - sigmoid(np.dot(w[:D], X[i, :])))
+        sigmoid(np.dot(w, X[i, :]))
+        * (1 - sigmoid(np.dot(w, X[i, :])))
         * np.outer(X[i, :], X[i, :])
         for i in range(N)
     )
@@ -84,6 +84,7 @@ def EM(x, y, epsilon_tot, epsilon_log):
     a_new = np.empty(D + 1, dtype=float)
     a_new.fill(1000)
     gamma = 0.01
+    x_1 = np.hstack((x, np.ones((N, 1))))
     while abs(np.linalg.norm(a) - np.linalg.norm(a_new)) > epsilon_tot:
         a = a_new
         # E-step
@@ -98,8 +99,8 @@ def EM(x, y, epsilon_tot, epsilon_log):
 
         # M-step
         for _ in range(1000):
-            h = H(a, x, N, D)
-            new_a = a - gamma * np.linalg.inv(h) @ g(a, p_tilde, x, N, D)
+            h = H(a, x_1, N)
+            new_a = a - gamma * np.linalg.inv(h) @ g(a, p_tilde, x_1, N)
             new_a /= np.linalg.norm(new_a)
             if np.linalg.norm(new_a - a) < epsilon_log:
                 break
@@ -107,9 +108,9 @@ def EM(x, y, epsilon_tot, epsilon_log):
         a_new /= a_new[0]
         for t in range(T):
             for _ in range(1000):
-                h = H(v[t, :], x, N, D)
+                h = H(v[t, :], x_1, N)
                 new_v = v[t, :] - gamma * np.linalg.inv(h) @ g(
-                    v[t, :], soft_label[:, t], x, N, D
+                    v[t, :], soft_label[:, t], x_1, N
                 )
                 new_v /= np.linalg.norm(new_v)
                 if np.linalg.norm(new_v - v[t, :]) < epsilon_log:
@@ -120,7 +121,7 @@ def EM(x, y, epsilon_tot, epsilon_log):
 
 
 w_real = np.array([1, -1])
-x, y = generate_data(1000, w_real)
+x, y = generate_data(10000, w_real)
 advice = expert_advice(y, [0.9, 0.9, 0.7], [0.8, 0.7, 0.8])
 alpha, beta, w = EM(x, advice, 1e-6, 1e-6)
 print(alpha, beta, w)
