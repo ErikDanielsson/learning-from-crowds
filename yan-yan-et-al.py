@@ -11,17 +11,23 @@ def generate_data(N, w):
     return x, y
 
 
-def expert_advice(y, alpha, beta):
+def expert_advice(y, x, w):
     N = len(y)
-    M = len(alpha)
+    M = w.shape[1]
     advice = np.zeros((N, M))
     for i, yi in enumerate(y):
         if yi == 1:
-            for j, a in enumerate(alpha):
-                advice[i, j] = 1 * (np.random.uniform(0, 1) <= a)
+            for j in range(M):
+                advice[i, j] = 1 * (
+                    np.random.uniform(0, 1)
+                    >= sigmoid(np.dot(w[0:2, j], x[i, :]) + w[-1, j])
+                )
         else:
-            for j, b in enumerate(beta):
-                advice[i, j] = 1 * (np.random.uniform(0, 1) >= b)
+            for j in range(M):
+                advice[i, j] = 1 * (
+                    np.random.uniform(0, 1)
+                    >= sigmoid(np.dot(w[0:2, j], x[i, :]) + w[-1, j])
+                )
     return advice
 
 
@@ -70,6 +76,18 @@ def H(w, X, N):
     )
 
 
+def log_loss(y, x, w):
+    return -sum(
+        y[i] * np.log(sigmoid(np.dot(w, x[i, :])))
+        + (1 - y[i]) * np.log(1 - sigmoid(np.dot(w, x[i, :])))
+        for i in len(y)
+    )
+
+
+def gradient_log_loss(y, x, w):
+    return -sum(x[i, :] * (y[i] - sigmoid(np.dot(w, x[i]))) for i in range(len(y)))
+
+
 def soft_lab(yit, p_tilde):
     return yit * p_tilde + (1 - yit) * (1 - p_tilde)
 
@@ -82,7 +100,7 @@ def EM(x, y, epsilon_tot, epsilon_log):
     v = np.zeros((T, D + 1))
     a = np.zeros(D + 1)
     a_new = np.empty(D + 1, dtype=float)
-    a_new.fill(1000)
+    a_new.fill(1)
     gamma = 0.01
     x_1 = np.hstack((x, np.ones((N, 1))))
     while abs(np.linalg.norm(a) - np.linalg.norm(a_new)) > epsilon_tot:
@@ -117,13 +135,14 @@ def EM(x, y, epsilon_tot, epsilon_log):
                     break
                 v[t, :] = new_v
             v[t, :] /= v[t, 0]
+            print(v)
     return a, v
 
 
 w_real = np.array([1, -1])
-x, y = generate_data(10000, w_real)
-advice = expert_advice(y, [0.9, 0.9, 0.7], [0.8, 0.7, 0.8])
-alpha, beta, w = EM(x, advice, 1e-6, 1e-6)
+x, y = generate_data(1000, w_real)
+advice = expert_advice(y, x, np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]))
+alpha, beta, w = EM(x, advice, 1e-3, 1e-3)
 print(alpha, beta, w)
 positive = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 1])
 negative = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 0])
