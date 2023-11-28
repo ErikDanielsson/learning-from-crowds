@@ -77,7 +77,7 @@ def H(w, X, N):
     )
 
 
-def log_loss(y, x, w):
+def log_loss(w, y, x):
     return -sum(
         y[i] * np.log(dot_sigmoid(x[i, :], w))
         + (1 - y[i]) * np.log(1 - dot_sigmoid(x[i, :], w))
@@ -85,7 +85,7 @@ def log_loss(y, x, w):
     )
 
 
-def gradient_log_loss(y, x, w):
+def gradient_log_loss(w, y, x):
     x_1 = np.hstack((x, np.ones((x.shape[0], 1))))
     return -sum(x_1[i, :] * (y[i] - dot_sigmoid(x[i, :], w)) for i in range(len(y)))
 
@@ -119,17 +119,19 @@ def EM(x, y, epsilon_tot, epsilon_log):
 
         # M-step
         a_new = scipy.optimize.minimize(
-            lambda w: log_loss(p_tilde, x, w),
+            log_loss,
             a_new,
-            jac=lambda w: gradient_log_loss(p_tilde, x, w),
+            jac=gradient_log_loss,
+            args=(p_tilde, x),
             method="BFGS",
         ).x
         a_new /= a_new[0]
         for t in range(T):
             v[t, :] = scipy.optimize.minimize(
-                lambda w: log_loss(soft_label[:, t], x, w),
+                log_loss,
                 v[t, :],
-                jac=lambda w: gradient_log_loss(soft_label[:, t], x, w),
+                jac=gradient_log_loss,
+                args=(soft_label[:, t], x),
                 method="BFGS",
             ).x
             v[t, :] /= v[t, 0]
@@ -164,7 +166,7 @@ def EM(x, y, epsilon_tot, epsilon_log):
 w_real = np.array([1, -2])
 x, y = generate_data(10000, w_real)
 advice = expert_advice(y, x, np.array([[1, 1, 1], [1, 1, 1], [1, 1, 200]]))
-a, v = EM(x, advice, 1e-6, 1e-6)
+a, v = EM(x, advice, 1e-8, 1e-8)
 print(a, v)
 positive = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 1])
 negative = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 0])
