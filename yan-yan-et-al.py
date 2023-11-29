@@ -88,24 +88,19 @@ def EM(x, y, epsilon_tot, epsilon_log):
     a_new[1] = -1
     gamma = 0.01
     x_1 = x  # np.hstack((x, np.ones((N, 1))))
-    while abs(np.linalg.norm(a) - np.linalg.norm(a_new)) > epsilon_tot:
+    while np.linalg.norm(a - a_new) > epsilon_tot:
         a = a_new
         # E-step
         for i in range(N):
             xi = x[i, :]
             yi = y[i, :]
             p_tilde[i] = calc_p_tilde(xi, yi, v, a)
-        # p_tilde /= sum(p_tilde)
 
         for i in range(N):
             p_ti = p_tilde[i]
             for t in range(T):
                 yit = yi[t]
                 soft_label[i, t] = soft_lab(yit, p_ti)
-        print(sum(p_tilde))
-        print((soft_label[3, 0]))
-        print((soft_label[3, 1]))
-        print((soft_label[3, 2]))
 
         # M-step
         a_new = scipy.optimize.minimize(
@@ -115,8 +110,7 @@ def EM(x, y, epsilon_tot, epsilon_log):
             args=(p_tilde, x),
             method="BFGS",
         ).x
-        a_new /= a_new[0]
-        # a_new /= np.linalg.norm(a_new)
+
         for t in range(T):
             v[t, :] = scipy.optimize.minimize(
                 log_loss,
@@ -125,7 +119,6 @@ def EM(x, y, epsilon_tot, epsilon_log):
                 args=(soft_label[:, t], x),
                 method="BFGS",
             ).x
-            # v[t, :] /= np.linalg.norm(v[t, :])
 
         print(a)
         print(v)
