@@ -47,12 +47,14 @@ def yit_estimate(yit, xi, v):
 
 def calc_p_tilde(xi, yi, v, a):
     p = 1
+    q = 1
     z_factor = dot_sigmoid(xi, a)
     for t in range(len(yi)):
-        yit = yi[t]
-        e = yit_estimate(yit, xi, v[t, :])
+        e = yit_estimate(yi[t], xi, v[t, :])
+        f = 1 - e
         p *= e
-    return p * z_factor
+        q *= f
+    return p * z_factor / (p * z_factor + q * (1 - z_factor))
 
 
 def log_loss(w, y, x):
@@ -61,11 +63,6 @@ def log_loss(w, y, x):
         sigma = dot_sigmoid(x[i, :], w)
         s += y[i] * np.log(sigma) + (1 - y[i]) * np.log(1 - sigma)
     return -s
-    return -sum(
-        y[i] * np.log(dot_sigmoid(x[i, :], w))
-        + (1 - y[i]) * np.log(1 - dot_sigmoid(x[i, :], w))
-        for i in range(len(y))
-    )
 
 
 def gradient_log_loss(w, y, x):
@@ -85,7 +82,7 @@ def EM(x, y, epsilon_tot, epsilon_log):
     v = np.random.rand(T, D)
     a = np.zeros(D)
     a_new = np.ones(D)
-    a_new[1] = -1
+    a_new[1] = -2
     gamma = 0.01
     x_1 = x  # np.hstack((x, np.ones((N, 1))))
     while np.linalg.norm(a - a_new) > epsilon_tot:
@@ -110,8 +107,10 @@ def EM(x, y, epsilon_tot, epsilon_log):
             args=(p_tilde, x),
             method="BFGS",
         ).x
+        a_new /= a_new[0]
 
         for t in range(T):
+            print(t)
             v[t, :] = scipy.optimize.minimize(
                 log_loss,
                 v[t, :],
@@ -128,9 +127,7 @@ def EM(x, y, epsilon_tot, epsilon_log):
 
 w_real = np.array([1, -2])
 x, y = generate_data(1000, w_real)
-advice = expert_advice(y, x, np.array([[10, -10], [2000, 2000], [2000, 2000]]).T)
-a, v = EM(x, advice, 1e-8, 1e-6)
-print(a, v)
+advice = expert_advice(y, x, np.array([[10, 10], [10, 10], [10, 10]]).T)
 fig, axs = plt.subplots(2, 2)
 
 positive = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 1])
@@ -152,6 +149,10 @@ axs[0, 1].scatter(positive[1][:, 0], positive[1][:, 1])
 axs[0, 1].scatter(negative[1][:, 0], negative[1][:, 1])
 axs[1, 1].scatter(positive[2][:, 0], positive[2][:, 1])
 axs[1, 1].scatter(negative[2][:, 0], negative[2][:, 1])
+plt.show()
+
+a, v = EM(x, advice, 1e-5, 1e-6)
+print(a, v)
 
 rot90 = np.array([[0, -1], [1, 0]])
 l_real = rot90 @ w_real
