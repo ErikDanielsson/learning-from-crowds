@@ -84,8 +84,6 @@ def EM(x, y, epsilon_tot, epsilon_log):
     v[:, -1] = 10
     a = np.zeros(D + 1)
     a_new = np.ones(D + 1)
-    a_new[1] = -2
-    a_new[0] = 0
 
     gamma = 0.01
     x_1 = np.hstack((x, np.ones((N, 1))))
@@ -96,13 +94,12 @@ def EM(x, y, epsilon_tot, epsilon_log):
             xi = x_1[i, :]
             yi = y[i, :]
             p_tilde[i] = calc_p_tilde(xi, yi, v, a)
-        print(p_tilde)
 
         for i in range(N):
+            yi = y[i, :]
             p_ti = p_tilde[i]
             for t in range(T):
-                yit = yi[t]
-                soft_label[i, t] = soft_lab(yit, p_ti)
+                soft_label[i, t] = soft_lab(yi[t], p_ti)
 
         # M-step
         a_new = scipy.optimize.minimize(
@@ -111,7 +108,6 @@ def EM(x, y, epsilon_tot, epsilon_log):
             jac=gradient_log_loss,
             args=(p_tilde, x_1),
             method="L-BFGS-B",
-            tol=1e-8,
         ).x
         a_new /= a_new[0]
 
@@ -123,7 +119,6 @@ def EM(x, y, epsilon_tot, epsilon_log):
                 jac=gradient_log_loss,
                 args=(soft_label[:, t], x_1),
                 method="L-BFGS-B",
-                tol=1e-8,
             ).x
 
         print(a_new)
@@ -132,8 +127,8 @@ def EM(x, y, epsilon_tot, epsilon_log):
 
 
 w_real = np.array([1, -2])
-x, y = generate_data(1000, w_real)
-advice = expert_advice(y, x, np.array([[0, 0, 10], [0, 0, 10], [0, 0, 10]]).T)
+x, y = generate_data(10000, w_real)
+advice = expert_advice(y, x, np.array([[0, 0, 10], [10, -10, 0], [0, 0, 10]]).T)
 fig, axs = plt.subplots(2, 2)
 
 positive = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 1])
@@ -157,7 +152,7 @@ axs[1, 1].scatter(positive[2][:, 0], positive[2][:, 1])
 axs[1, 1].scatter(negative[2][:, 0], negative[2][:, 1])
 plt.show()
 
-a, v = EM(x, advice, 1e-8, 1e-6)
+a, v = EM(x, advice, 1e-3, 1e-6)
 print(a, v)
 
 rot90 = np.array([[0, -1], [1, 0]])
