@@ -112,7 +112,6 @@ def EM(x, y, epsilon_tot, epsilon_log):
         a_new /= a_new[0]
 
         for t in range(T):
-            print(t)
             v[t, :] = scipy.optimize.minimize(
                 log_loss,
                 v[t, :],
@@ -122,6 +121,7 @@ def EM(x, y, epsilon_tot, epsilon_log):
             ).x
 
         print(a_new)
+        print(v)
 
     return a, v
 
