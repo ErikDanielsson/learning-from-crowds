@@ -15,6 +15,7 @@ def generate_data(N, w):
 def expert_advice(y, x, w):
     N = len(y)
     M = w.shape[1]
+    x = np.hstack((x, np.ones((N, 1))))
     advice = np.zeros((N, M))
     for i, yi in enumerate(y):
         if yi == 1:
@@ -77,21 +78,25 @@ def soft_lab(yit, p_tilde):
 def EM(x, y, epsilon_tot, epsilon_log):
     N, D = x.shape
     N, T = y.shape
-    p_tilde = np.zeros(N)
+    p_tilde = np.random.rand(N)
     soft_label = np.zeros((N, T))
-    v = np.random.rand(T, D)
-    a = np.zeros(D)
-    a_new = np.ones(D)
+    v = np.zeros((T, D + 1))
+    v[:, -1] = 10
+    a = np.zeros(D + 1)
+    a_new = np.ones(D + 1)
     a_new[1] = -2
+    a_new[0] = 0
+
     gamma = 0.01
-    x_1 = x  # np.hstack((x, np.ones((N, 1))))
+    x_1 = np.hstack((x, np.ones((N, 1))))
     while np.linalg.norm(a - a_new) > epsilon_tot:
         a = a_new
         # E-step
         for i in range(N):
-            xi = x[i, :]
+            xi = x_1[i, :]
             yi = y[i, :]
             p_tilde[i] = calc_p_tilde(xi, yi, v, a)
+        print(p_tilde)
 
         for i in range(N):
             p_ti = p_tilde[i]
@@ -104,8 +109,9 @@ def EM(x, y, epsilon_tot, epsilon_log):
             log_loss,
             a_new,
             jac=gradient_log_loss,
-            args=(p_tilde, x),
-            method="BFGS",
+            args=(p_tilde, x_1),
+            method="L-BFGS-B",
+            tol=1e-8,
         ).x
         a_new /= a_new[0]
 
@@ -115,19 +121,19 @@ def EM(x, y, epsilon_tot, epsilon_log):
                 log_loss,
                 v[t, :],
                 jac=gradient_log_loss,
-                args=(soft_label[:, t], x),
-                method="BFGS",
+                args=(soft_label[:, t], x_1),
+                method="L-BFGS-B",
+                tol=1e-8,
             ).x
 
-        print(a)
-        print(v)
+        print(a_new)
 
     return a, v
 
 
 w_real = np.array([1, -2])
 x, y = generate_data(1000, w_real)
-advice = expert_advice(y, x, np.array([[10, 10], [10, 10], [10, 10]]).T)
+advice = expert_advice(y, x, np.array([[0, 0, 10], [0, 0, 10], [0, 0, 10]]).T)
 fig, axs = plt.subplots(2, 2)
 
 positive = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 1])
@@ -151,7 +157,7 @@ axs[1, 1].scatter(positive[2][:, 0], positive[2][:, 1])
 axs[1, 1].scatter(negative[2][:, 0], negative[2][:, 1])
 plt.show()
 
-a, v = EM(x, advice, 1e-5, 1e-6)
+a, v = EM(x, advice, 1e-8, 1e-6)
 print(a, v)
 
 rot90 = np.array([[0, -1], [1, 0]])
