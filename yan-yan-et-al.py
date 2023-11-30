@@ -154,7 +154,6 @@ plt.show()
 
 a, v = EM(x, advice, 1e-3, 1e-6)
 print(a, v)
-print(v.shape)
 
 # rot90 = np.array([[0, -1], [1, 0]])
 # l_real = rot90 @ w_real
@@ -167,7 +166,6 @@ N = x.shape[0]
 fig, axs = plt.subplots(2, 2)
 b = np.ones(N)
 x_int = np.column_stack((x,b))
-print(x_int)
 pos_pred = np.array([[x1, x2] for (x1, x2), i in zip(x,range(N)) if dot_sigmoid(x_int[i,:],a) >= 0.5])
 neg_pred = np.array([[x1, x2] for (x1, x2), i in zip(x,range(N)) if dot_sigmoid(x_int[i,:],a) < 0.5])
 axs[0, 0].scatter(pos_pred[:, 0], pos_pred[:, 1])
@@ -175,24 +173,17 @@ axs[0, 0].scatter(neg_pred[:, 0], neg_pred[:, 1])
 pos_pred = []
 neg_pred = []
 pred_advice = expert_advice(y,x,v.T)
-print(pred_advice)
-# for t in range(3):
-#     pos_pred.append(
-#         np.array([[x1, x2] 
-#                   for (x1, x2), yi, i in zip(x, y, range(N)) if (dot_sigmoid(x_int[i,:],v[t,:]))^yi * (1-dot_sigmoid(x_int[i,:],v[t,:]))^(1-yi) >= 0.5])
-#     )
-#     neg_pred.append(
-#         np.array([[x1, x2] 
-#                   for (x1, x2), yi, i in zip(x, y, range(N)) if (dot_sigmoid(x_int[i,:],v[t,:]))^yi * (1-dot_sigmoid(x_int[i,:],v[t,:]))^(1-yi) < 0.5])
-#     )
 
 for t in range(3):
     pos_pred.append(
-        np.array([[x1, x2] for (x1, x2), yi in zip(x, pred_advice[:, t]) if yi == 1])
+        np.array([[x1, x2] 
+                  for (x1, x2), yi, i in zip(x, y, range(N)) if (dot_sigmoid(x_int[i,:],v[t,:]))**yi * (1-dot_sigmoid(x_int[i,:],v[t,:]))**(1-yi) >= 0.5])
     )
     neg_pred.append(
-        np.array([[x1, x2] for (x1, x2), yi in zip(x, pred_advice[:, t]) if yi == 0])
+        np.array([[x1, x2] 
+                  for (x1, x2), yi, i in zip(x, y, range(N)) if (dot_sigmoid(x_int[i,:],v[t,:]))**yi * (1-dot_sigmoid(x_int[i,:],v[t,:]))**(1-yi) < 0.5])
     )
+
 axs[1, 0].scatter(pos_pred[0][:, 0], pos_pred[0][:, 1])
 axs[1, 0].scatter(neg_pred[0][:, 0], neg_pred[0][:, 1])
 axs[0, 1].scatter(pos_pred[1][:, 0], pos_pred[1][:, 1])
