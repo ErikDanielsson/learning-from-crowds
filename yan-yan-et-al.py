@@ -83,7 +83,7 @@ def EM(x, y, epsilon_tot, epsilon_log):
     v = np.zeros((T, D + 1))
     v[:, -1] = 10
     a = np.zeros(D + 1)
-    a_new = np.ones(D + 1)
+    a_new = np.random.randn(D + 1)
 
     gamma = 0.01
     x_1 = np.hstack((x, np.ones((N, 1))))
@@ -104,12 +104,12 @@ def EM(x, y, epsilon_tot, epsilon_log):
         # M-step
         a_new = scipy.optimize.minimize(
             log_loss,
-            a_new,
+            np.random.randn(D + 1),
             jac=gradient_log_loss,
             args=(p_tilde, x_1),
             method="L-BFGS-B",
         ).x
-        a_new /= a_new[0]
+        a_new /= abs(a_new[0])
 
         for t in range(T):
             v[t, :] = scipy.optimize.minimize(
@@ -128,13 +128,13 @@ def EM(x, y, epsilon_tot, epsilon_log):
 
 w_real = np.array([1, -2])
 x, y = generate_data(10000, w_real)
-advice = expert_advice(y, x, np.array([[0, 0, 10], [10, -10, 0], [0, 0, 10]]).T)
+advice = expert_advice(y, x, np.array([[10, -3, 0], [10, -10, 0], [0, 0, 10]]).T)
 fig, axs = plt.subplots(2, 2)
 
 positive = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 1])
 negative = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 0])
-axs[0, 0].scatter(positive[:, 0], positive[:, 1])
-axs[0, 0].scatter(negative[:, 0], negative[:, 1])
+axs[0, 0].scatter(positive[:, 0], positive[:, 1], marker="+")
+axs[0, 0].scatter(negative[:, 0], negative[:, 1], marker="+")
 positive = []
 negative = []
 for t in range(3):
@@ -144,12 +144,12 @@ for t in range(3):
     negative.append(
         np.array([[x1, x2] for (x1, x2), yi in zip(x, advice[:, t]) if yi == 0])
     )
-axs[1, 0].scatter(positive[0][:, 0], positive[0][:, 1])
-axs[1, 0].scatter(negative[0][:, 0], negative[0][:, 1])
-axs[0, 1].scatter(positive[1][:, 0], positive[1][:, 1])
-axs[0, 1].scatter(negative[1][:, 0], negative[1][:, 1])
-axs[1, 1].scatter(positive[2][:, 0], positive[2][:, 1])
-axs[1, 1].scatter(negative[2][:, 0], negative[2][:, 1])
+axs[1, 0].scatter(positive[0][:, 0], positive[0][:, 1], marker="+")
+axs[1, 0].scatter(negative[0][:, 0], negative[0][:, 1], marker="+")
+axs[0, 1].scatter(positive[1][:, 0], positive[1][:, 1], marker="+")
+axs[0, 1].scatter(negative[1][:, 0], negative[1][:, 1], marker="+")
+axs[1, 1].scatter(positive[2][:, 0], positive[2][:, 1], marker="+")
+axs[1, 1].scatter(negative[2][:, 0], negative[2][:, 1], marker="+")
 plt.show()
 
 a, v = EM(x, advice, 1e-3, 1e-6)
@@ -165,29 +165,69 @@ print(a, v)
 N = x.shape[0]
 fig, axs = plt.subplots(2, 2)
 b = np.ones(N)
-x_int = np.column_stack((x,b))
-pos_pred = np.array([[x1, x2] for (x1, x2), i in zip(x,range(N)) if dot_sigmoid(x_int[i,:],a) >= 0.5])
-neg_pred = np.array([[x1, x2] for (x1, x2), i in zip(x,range(N)) if dot_sigmoid(x_int[i,:],a) < 0.5])
+x_int = np.column_stack((x, b))
+pos_pred = np.array(
+    [[x1, x2] for (x1, x2), i in zip(x, range(N)) if dot_sigmoid(x_int[i, :], a) >= 0.5]
+)
+neg_pred = np.array(
+    [[x1, x2] for (x1, x2), i in zip(x, range(N)) if dot_sigmoid(x_int[i, :], a) < 0.5]
+)
 axs[0, 0].scatter(pos_pred[:, 0], pos_pred[:, 1])
 axs[0, 0].scatter(neg_pred[:, 0], neg_pred[:, 1])
 pos_pred = []
 neg_pred = []
-pred_advice = expert_advice(y,x,v.T)
+# pred_advice = expert_advice(y, x, v.T)
+
+pred_confidence = []
 
 for t in range(3):
-    pos_pred.append(
-        np.array([[x1, x2] 
-                  for (x1, x2), yi, i in zip(x, y, range(N)) if (dot_sigmoid(x_int[i,:],v[t,:]))**yi * (1-dot_sigmoid(x_int[i,:],v[t,:]))**(1-yi) >= 0.5])
-    )
-    neg_pred.append(
-        np.array([[x1, x2] 
-                  for (x1, x2), yi, i in zip(x, y, range(N)) if (dot_sigmoid(x_int[i,:],v[t,:]))**yi * (1-dot_sigmoid(x_int[i,:],v[t,:]))**(1-yi) < 0.5])
+    pred_confidence.append(
+        np.array(
+            [
+                dot_sigmoid(x_int[i, :], v[t, :])
+                if yi == 1
+                else 1 - dot_sigmoid(x_int[i, :], v[t, :])
+                for (x1, x2), yi, i in zip(x, y, range(N))
+            ]
+        )
     )
 
-axs[1, 0].scatter(pos_pred[0][:, 0], pos_pred[0][:, 1])
-axs[1, 0].scatter(neg_pred[0][:, 0], neg_pred[0][:, 1])
-axs[0, 1].scatter(pos_pred[1][:, 0], pos_pred[1][:, 1])
-axs[0, 1].scatter(neg_pred[1][:, 0], neg_pred[1][:, 1])
-axs[1, 1].scatter(pos_pred[2][:, 0], pos_pred[2][:, 1])
-axs[1, 1].scatter(neg_pred[2][:, 0], neg_pred[2][:, 1])
+    pos_pred.append(
+        np.array(
+            [
+                x_int[i, 0:1]
+                for yi, i in zip(y, range(N))
+                if (
+                    dot_sigmoid(x_int[i, :], v[t, :])
+                    if yi == 1
+                    else 1 - dot_sigmoid(x_int[i, :], v[t, :])
+                )
+                >= 0.5
+            ]
+        )
+    )
+    neg_pred.append(
+        np.array(
+            [
+                x_int[i, 0:1]
+                for yi, i in zip(y, range(N))
+                if (
+                    dot_sigmoid(x_int[i, :], v[t, :])
+                    if yi == 1
+                    else 1 - dot_sigmoid(x_int[i, :], v[t, :])
+                )
+                < 0.5
+            ]
+        )
+    )
+
+# axs[1, 0].scatter(pos_pred[0][:, 0], pos_pred[0][:, 1])
+# axs[1, 0].scatter(neg_pred[0][:, 0], neg_pred[0][:, 1])
+axs[1, 0].scatter(x_int[:, 0], x_int[:, 1], c=pred_confidence[0], cmap="plasma")
+# axs[0, 1].scatter(pos_pred[1][:, 0], pos_pred[1][:, 1])
+# axs[0, 1].scatter(neg_pred[1][:, 0], neg_pred[1][:, 1])
+axs[0, 1].scatter(x_int[:, 0], x_int[:, 1], c=pred_confidence[1], cmap="plasma")
+# axs[1, 1].scatter(pos_pred[2][:, 0], pos_pred[2][:, 1])
+# axs[1, 1].scatter(neg_pred[2][:, 0], neg_pred[2][:, 1])
+axs[1, 1].scatter(x_int[:, 0], x_int[:, 1], c=pred_confidence[2], cmap="plasma")
 plt.show()
