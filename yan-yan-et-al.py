@@ -127,8 +127,9 @@ def EM(x, y, epsilon_tot, epsilon_log):
 
 
 w_real = np.array([1, -2])
-x, y = generate_data(10000, w_real)
-advice = expert_advice(y, x, np.array([[10, -3, 0], [10, -10, 0], [0, 0, 10]]).T)
+x, y = generate_data(1000, w_real)
+# advice = expert_advice(y, x, np.array([[10, -3, 0], [10, -10, 0], [0, 0, 10]]).T)
+advice = expert_advice(y, x, np.array([[10, -3, 0], [10, -10, 1], [0, 0, 1]]).T)
 fig, axs = plt.subplots(2, 2)
 
 positive = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 1])
@@ -166,14 +167,18 @@ N = x.shape[0]
 fig, axs = plt.subplots(2, 2)
 b = np.ones(N)
 x_int = np.column_stack((x, b))
+pred_confidence = np.array(
+    [dot_sigmoid(x_int[i, :], a) >= 0.5 for (x1, x2), i in zip(x, range(N))]
+)
 pos_pred = np.array(
     [[x1, x2] for (x1, x2), i in zip(x, range(N)) if dot_sigmoid(x_int[i, :], a) >= 0.5]
 )
 neg_pred = np.array(
     [[x1, x2] for (x1, x2), i in zip(x, range(N)) if dot_sigmoid(x_int[i, :], a) < 0.5]
 )
-axs[0, 0].scatter(pos_pred[:, 0], pos_pred[:, 1])
-axs[0, 0].scatter(neg_pred[:, 0], neg_pred[:, 1])
+# axs[0, 0].scatter(pos_pred[:, 0], pos_pred[:, 1])
+# axs[0, 0].scatter(neg_pred[:, 0], neg_pred[:, 1])
+axs[0, 0].scatter(x_int[:, 0], x_int[:, 1], c=pred_confidence, cmap="coolwarm")
 pos_pred = []
 neg_pred = []
 # pred_advice = expert_advice(y, x, v.T)
@@ -223,11 +228,11 @@ for t in range(3):
 
 # axs[1, 0].scatter(pos_pred[0][:, 0], pos_pred[0][:, 1])
 # axs[1, 0].scatter(neg_pred[0][:, 0], neg_pred[0][:, 1])
-axs[1, 0].scatter(x_int[:, 0], x_int[:, 1], c=pred_confidence[0], cmap="plasma")
+axs[1, 0].scatter(x_int[:, 0], x_int[:, 1], c=pred_confidence[0], cmap="coolwarm")
 # axs[0, 1].scatter(pos_pred[1][:, 0], pos_pred[1][:, 1])
 # axs[0, 1].scatter(neg_pred[1][:, 0], neg_pred[1][:, 1])
-axs[0, 1].scatter(x_int[:, 0], x_int[:, 1], c=pred_confidence[1], cmap="plasma")
+axs[0, 1].scatter(x_int[:, 0], x_int[:, 1], c=pred_confidence[1], cmap="coolwarm")
 # axs[1, 1].scatter(pos_pred[2][:, 0], pos_pred[2][:, 1])
 # axs[1, 1].scatter(neg_pred[2][:, 0], neg_pred[2][:, 1])
-axs[1, 1].scatter(x_int[:, 0], x_int[:, 1], c=pred_confidence[2], cmap="plasma")
+axs[1, 1].scatter(x_int[:, 0], x_int[:, 1], c=pred_confidence[2], cmap="coolwarm")
 plt.show()
