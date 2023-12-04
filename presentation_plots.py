@@ -1,8 +1,7 @@
-import random
 from yan_yan_et_al import *
 from plotting import *
 
-random.seed(1234)
+np.random.seed(1234)
 
 a_real = np.array([1, -2, 0])
 x, y = generate_data(1000, a_real)
