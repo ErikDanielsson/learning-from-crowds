@@ -102,13 +102,23 @@ x, y = generate_data(1000, w_real)
 advice = expert_advice(y, [0.9, 0.9, 0.7], [0.8, 0.7, 0.8])
 alpha, beta, w = EM(x, advice, 1e-6, 1e-6)
 print(alpha, beta, w)
+
+fig, axs = plt.subplots(1,2)
 positive = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 1])
 negative = np.array([[x1, x2] for (x1, x2), yi in zip(x, y) if yi == 0])
-plt.scatter(positive[:, 0], positive[:, 1])
-plt.scatter(negative[:, 0], negative[:, 1])
-rot90 = np.array([[0, -1], [1, 0]])
-l_real = rot90 @ w_real
-l_est = rot90 @ w
-plt.plot(np.linspace(0, 1, 100), l_real[1] / l_real[0] * np.linspace(0, 1, 100))
-plt.plot(np.linspace(0, 1, 100), l_est[1] / l_est[0] * np.linspace(0, 1, 100))
+axs[0,0].scatter(positive[:, 0], positive[:, 1])
+axs[0,0].scatter(negative[:, 0], negative[:, 1])
+positive = np.array([ [x1, x2] for (x1, x2) in x if np.dot([x1,x2], w) > 0])
+negative = np.array([ [x1, x2] for (x1, x2) in x if np.dot([x1,x2], w) < 0])
+print (positive, negative)
+axs[0,1].scatter(positive[:, 0], positive[:, 1])
+axs[0,1].scatter(negative[:, 0], negative[:, 1])
+
+# rot90 = np.array([[0, -1], [1, 0]])
+# l_real = rot90 @ w_real
+# l_est = rot90 @ w
+# plt.plot(np.linspace(0, 1, 100), l_real[1] / l_real[0] * np.linspace(0, 1, 100))
+# plt.plot(np.linspace(0, 1, 100), l_est[1] / l_est[0] * np.linspace(0, 1, 100))
+
+plt.title("True Labels vs. Predicted Labels using EM")
 plt.show()
