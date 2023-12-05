@@ -8,7 +8,7 @@ x, y = generate_data(1000, a_real)
 x = x[:, 0:-1]
 v_real = np.array(
     [
-        [10, -3, 1],
+        [10, -3, 0],
         [10, 10, -10],
         [4, 4, -2],
         [0, -4, 2],
@@ -20,6 +20,7 @@ x_1 = np.column_stack((x, np.ones(x.shape[0])))
 
 plt.figure()
 plot_bin_datapoints(x, y, plt.gca(), marker="o", markersize=20)
+plot_line(a_real, plt.gca(), color="green")
 plt.gcf().suptitle("Ground truth", fontsize=16)
 plt.gca().set_xlabel("Feature 1")
 plt.gca().set_ylabel("Feature 2")
@@ -30,6 +31,7 @@ annotator_inds = [(0, 0), (1, 0), (0, 1), (1, 1)]
 fig, axs = plt.subplots(2, 2)
 for i, ind in enumerate(annotator_inds):
     plot_bin_datapoints(x, advice[:, i], axs[*ind], marker="o")
+    plot_line(v_real[i, :], axs[*ind], color="green")
     axs[*ind].set_title(f"Expert {i + 1}")
     axs[*ind].set_xlabel("Feature 1")
     axs[*ind].set_ylabel("Feature 2")
@@ -57,6 +59,9 @@ plt.figure()
 x_1 = np.column_stack((x, np.ones(x.shape[0])))
 pred_confidence = create_color_classifier(x_1, a, threshold=0.5)
 plot_bin_datapoints(x, pred_confidence, plt.gca(), markersize=20)
+plot_line(a_real, plt.gca(), color="green")
+plot_line(a, plt.gca(), color="red")
+
 plt.gcf().suptitle("Estimated ground truth", fontsize=16)
 plt.gca().set_xlabel("Feature 1")
 plt.gca().set_ylabel("Feature 2")
@@ -67,6 +72,8 @@ fig, axs = plt.subplots(2, 2)
 for i, ind in enumerate(annotator_inds):
     conf = create_color_annotator(x_1, pred_confidence, v[i, :], 0.5)
     plot_bin_datapoints(x, conf, axs[*ind])
+    plot_line(v_real[i, :], axs[*ind], color="green")
+    plot_line(v[i, :], axs[*ind], color="red")
     axs[*ind].set_title(f"Expert {i + 1}")
     axs[*ind].set_xlabel("Feature 1")
     axs[*ind].set_ylabel("Feature 2")

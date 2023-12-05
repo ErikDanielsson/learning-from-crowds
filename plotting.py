@@ -49,3 +49,14 @@ def create_color_annotator(x, y, w, threshold=False):
     if threshold:
         return vec_int(conf >= threshold)
     return conf
+
+
+def plot_line(w, ax, color="red"):
+    x_start = 0
+    x_end = (
+        min(1, abs(-(w[1] + w[2]) / w[0]))
+        if w[0] * w[1] < 0
+        else min(1, abs(-(w[2]) / w[0]))
+    )
+    x = np.linspace(x_start, x_end, 1000)
+    ax.plot(x, -(w[0] * x + w[2]) / w[1], c=color)
