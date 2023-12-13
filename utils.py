@@ -1,11 +1,10 @@
 import numpy as np
 
 
-def generate_data(N, w):
-    x1 = np.random.uniform(0, 1, N)
-    x2 = np.random.uniform(0, 1, N)
-    ones = np.ones(N)
-    x = np.array([x1, x2, ones]).T
+def generate_data(N, w, n=2, minc=0, maxc=1):
+    x1 = (maxc - minc) * np.random.random((N, n)) + minc
+    ones = np.ones((N, 1))
+    x = np.concatenate((x1, ones), axis=1)
     y = 1 * (np.dot(x, w) > 0)
     return x, y
 

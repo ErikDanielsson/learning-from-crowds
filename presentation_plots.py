@@ -6,12 +6,12 @@ np.random.seed(1234)
 a_real = np.array([1, -2, 0])
 x, y = generate_data(1000, a_real)
 x = x[:, 0:-1]
-v_real = np.array(
+v_real = 3 * np.array(
     [
-        [10, -3, 0],
-        [10, 10, -10],
-        [4, 4, -2],
-        [0, -4, 2],
+        [3, -1, 0],
+        [1, 1, -1],
+        [2, 2, -1],
+        [-2, -2, 1],
     ]
 )
 advice = expert_advice(y, x, v_real)
@@ -52,7 +52,7 @@ fig.tight_layout()
 plt.savefig("yan-yan-et-al-expert-bias.png")
 
 
-a, v = EM(x, advice, 1e-3, 1e-6)
+a, v = EM(x, advice, 1e-3)
 print(a, v)
 
 plt.figure()
