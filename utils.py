@@ -37,3 +37,28 @@ def sigmoid(x):
 # We define v = [w \gamma]
 def dot_sigmoid(x, v):
     return sigmoid(np.dot(x, v))
+
+
+def eval_classifier(x, advice, y, evaluator, t):
+    x_1 = np.concatenate((x, np.ones((x.shape[0], 1))), axis=1)
+    P = sum(y)
+    N = sum(1 - y)
+    TP = 0
+    FP = 0
+    TN = 0
+    FN = 0
+    for i in range(len(y)):
+        if evaluator(x_1[i, :], advice[i, :]) >= t:
+            if y[i] == 1:
+                TP += 1
+            else:
+                FP += 1
+        else:
+            if y[i] == 1:
+                FN += 1
+            else:
+                TN += 1
+    # prec = TP / (TP + FP)
+    # rec = TP / (TP + FN)
+    # F_score = 2 * prec * rec / (prec + rec)
+    return TP / P, FP / N

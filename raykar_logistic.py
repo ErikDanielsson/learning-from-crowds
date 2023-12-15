@@ -45,7 +45,7 @@ def H(w, X, N):
     )
 
 
-def EM(X, y, epsilon_tot, epsilon_log):
+def raykar_et_al(X, y, epsilon_tot, epsilon_log):
     N, n_features = X.shape
     R = y.shape[1]
     w = np.zeros(n_features)
@@ -97,6 +97,7 @@ def EM(X, y, epsilon_tot, epsilon_log):
     return alpha, beta, w
 
 
+"""
 w_real = np.array([1, -1])
 x, y = generate_data(1000, w_real)
 advice = expert_advice(y, [0.9, 0.9, 0.7], [0.8, 0.7, 0.8])
@@ -112,3 +113,4 @@ l_est = rot90 @ w
 plt.plot(np.linspace(0, 1, 100), l_real[1] / l_real[0] * np.linspace(0, 1, 100))
 plt.plot(np.linspace(0, 1, 100), l_est[1] / l_est[0] * np.linspace(0, 1, 100))
 plt.show()
+"""

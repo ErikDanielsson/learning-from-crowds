@@ -53,7 +53,7 @@ def real_likelihood(a, v, x, y, N, T):
     return s
 
 
-def EM(x, y, epsilon_tot, sigma):
+def yan_yan_et_al(x, y, epsilon_tot, sigma):
     N, D = x.shape
     N, T = y.shape
     p_tilde = np.random.rand(N)
@@ -84,24 +84,34 @@ def EM(x, y, epsilon_tot, sigma):
                 soft_label[i, t] = soft_lab(yi[t], p_ti)
 
         # M-step
-        a_new = scipy.optimize.minimize(
+        res = scipy.optimize.minimize(
             log_loss,
             np.random.randn(D + 1),
             jac=gradient_log_loss,
             args=(p_tilde, x_1, sigma),
             method="L-BFGS-B",
-        ).x
+        )
+        if res.success:
+            a_new = res.x
 
         for t in range(T):
-            v[t, :] = scipy.optimize.minimize(
+            res = scipy.optimize.minimize(
                 log_loss,
                 v[t, :],
                 jac=gradient_log_loss,
                 args=(soft_label[:, t], x_1, sigma),
                 method="L-BFGS-B",
-            ).x
+            )
+            if res.success:
+                v[t, :] = res.x
 
         l_curr = real_likelihood(a_new, v, x_1, y, N, T)
         ls.append(l_curr)
+        print(l_curr)
+        print(a_new)
 
     return a, v, ls
+
+
+def eval_log_classifier(x, advice, a):
+    return dot_sigmoid(x, a)
