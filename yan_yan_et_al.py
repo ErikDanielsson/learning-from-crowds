@@ -5,13 +5,13 @@ from multiprocessing import Pool
 
 
 def yit_estimate(yit, xi, v):
-    return 1 - dot_sigmoid(xi, v) if yit == 0 else dot_sigmoid(xi, v)
+    return 1 - slow_sigmoid(xi, v) if yit == 0 else slow_sigmoid(xi, v)
 
 
 def calc_p_tilde(xi, yi, v, a):
     p = 1
     q = 1
-    z_factor = dot_sigmoid(xi, a)
+    z_factor = slow_sigmoid(xi, a)
     for t in range(len(yi)):
         e = yit_estimate(yi[t], xi, v[t, :])
         f = 1 - e
@@ -20,20 +20,27 @@ def calc_p_tilde(xi, yi, v, a):
     return p * z_factor / (p * z_factor + q * (1 - z_factor))
 
 
+def s_log_loss(sigma, y):
+    return y * np.log(sigma) + (1 - y) * np.log(1 - sigma)
+
+
+vec_log_loss = np.vectorize(s_log_loss)
+
+
 def log_loss(w, y, x, sigma):
-    s = 0
-    for i in range(len(y)):
-        sigma = dot_sigmoid(x[i, :], w)
-        s += y[i] * np.log(sigma) + (1 - y[i]) * np.log(1 - sigma)
-    return -s + sigma * np.dot(w, w)
+    sigma = dot_sigmoid(x, w)
+    return -sum(vec_log_loss(sigma, y))
 
 
 def gradient_log_loss(w, y, x, sigma):
-    # x_1 = np.hstack((x, np.ones((x.shape[0], 1))))
-    return (
-        -sum(x[i, :] * (y[i] - dot_sigmoid(x[i, :], w)) for i in range(len(y)))
-        + sigma * w
-    )
+    s = dot_sigmoid(x, w)
+    return -np.dot(x.T, y - s)
+
+
+def hessian_log_loss(w, y, x, sigma):
+    s = dot_sigmoid(x, w)
+    S = np.diag(np.multiply(s, 1 - s))
+    return np.linalg.multi_dot((x.T, S, x))
 
 
 def soft_lab(yit, p_tilde):
@@ -41,16 +48,29 @@ def soft_lab(yit, p_tilde):
 
 
 def real_likelihood(a, v, x, y, N, T):
+    zf = dot_sigmoid(x, a)
     s = 0
     for i in range(N):
         xi = x[i, :]
         yi = y[i, :]
         for t in range(T):
             yit = yi[t]
-            zf = dot_sigmoid(xi, a)
             yf = yit_estimate(yit, xi, v[t, :])
-            s += np.log(zf * yf + (1 - zf) * (1 - yf))
+            s += np.log(zf[i] * yf + (1 - zf[i]) * (1 - yf))
     return s
+
+
+def posterior(x, y, a, v):
+    T = v.shape[0]
+    zf = dot_sigmoid(x, a)
+    likelihood = 1
+    not_likelihood = 1
+    for t in range(T):
+        yt = y[t]
+        yf = yit_estimate(yt, x, v[t, :])
+        likelihood *= yf
+        not_likelihood *= 1 - yf
+    return likelihood * zf / (likelihood * zf + not_likelihood * (1 - zf))
 
 
 def yan_yan_et_al(x, y, epsilon_tot, sigma):
@@ -86,32 +106,36 @@ def yan_yan_et_al(x, y, epsilon_tot, sigma):
         # M-step
         res = scipy.optimize.minimize(
             log_loss,
-            np.random.randn(D + 1),
+            a,  # np.random.randn(D + 1),
             jac=gradient_log_loss,
+            hess=hessian_log_loss,
             args=(p_tilde, x_1, sigma),
-            method="L-BFGS-B",
+            method="trust-exact",
         )
         if res.success:
             a_new = res.x
+        else:
+            print("fail")
+            print(res)
 
         for t in range(T):
             res = scipy.optimize.minimize(
                 log_loss,
-                v[t, :],
+                v[t, :],  # np.random.randn(D + 1),
                 jac=gradient_log_loss,
+                hess=hessian_log_loss,
                 args=(soft_label[:, t], x_1, sigma),
-                method="L-BFGS-B",
+                method="trust-exact",
             )
             if res.success:
                 v[t, :] = res.x
+            else:
+                print("fail")
+                print(res)
 
         l_curr = real_likelihood(a_new, v, x_1, y, N, T)
         ls.append(l_curr)
         print(l_curr)
-        print(a_new)
+        # print(a_new)
 
     return a, v, ls
-
-
-def eval_log_classifier(x, advice, a):
-    return dot_sigmoid(x, a)
