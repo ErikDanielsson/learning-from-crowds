@@ -87,7 +87,7 @@ def yan_yan_et_al(x, y, epsilon_tot, sigma):
     ls = []
 
     x_1 = np.hstack((x, np.ones((N, 1))))
-    while abs(l_curr - l_prev) > epsilon_tot:
+    while np.linalg.norm(a - a_new) > epsilon_tot:
         # print(f"diff: {l_curr - l_prev}")
         l_prev = l_curr
         a = a_new
@@ -106,36 +106,40 @@ def yan_yan_et_al(x, y, epsilon_tot, sigma):
         # M-step
         res = scipy.optimize.minimize(
             log_loss,
-            a,  # np.random.randn(D + 1),
+            np.random.randn(D + 1),
             jac=gradient_log_loss,
             hess=hessian_log_loss,
             args=(p_tilde, x_1, sigma),
             method="trust-exact",
         )
+        print(np.arccos(np.dot(a_new, a) / np.linalg.norm(a_new) / np.linalg.norm(a)))
+        a_new = res.x
+        a_new /= a_new[0]
         if res.success:
-            a_new = res.x
+            pass
         else:
-            print("fail")
+            print("fail a")
             print(res)
 
         for t in range(T):
             res = scipy.optimize.minimize(
                 log_loss,
-                v[t, :],  # np.random.randn(D + 1),
+                np.random.randn(D + 1),
                 jac=gradient_log_loss,
                 hess=hessian_log_loss,
                 args=(soft_label[:, t], x_1, sigma),
                 method="trust-exact",
             )
+            v[t, :] = res.x
             if res.success:
-                v[t, :] = res.x
+                pass
             else:
-                print("fail")
+                print("fail v")
                 print(res)
 
         l_curr = real_likelihood(a_new, v, x_1, y, N, T)
         ls.append(l_curr)
-        print(l_curr)
+        print(np.linalg.norm(a - a_new))
         # print(a_new)
 
     return a, v, ls

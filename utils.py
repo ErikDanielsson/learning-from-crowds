@@ -18,12 +18,12 @@ def expert_advice(y, x, w):
         if yi == 1:
             for j in range(M):
                 advice[i, j] = 1 * (
-                    np.random.uniform(0, 1) <= dot_sigmoid(x[i, :], w[j, :])
+                    np.random.uniform(0, 1) <= slow_sigmoid(x[i, :], w[j, :])
                 )
         else:
             for j in range(M):
                 advice[i, j] = 1 * (
-                    np.random.uniform(0, 1) >= dot_sigmoid(x[i, :], w[j, :])
+                    np.random.uniform(0, 1) >= slow_sigmoid(x[i, :], w[j, :])
                 )
     return advice
 
@@ -34,13 +34,22 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
+vsigmoid = np.vectorize(sigmoid)
+
+
 # We define v = [w \gamma]
-def dot_sigmoid(x, v):
+def slow_sigmoid(x, v):
     return sigmoid(np.dot(x, v))
 
 
-def eval_classifier(x, advice, y, evaluator, t):
-    x_1 = np.concatenate((x, np.ones((x.shape[0], 1))), axis=1)
+def dot_sigmoid(x, v):
+    return vsigmoid(np.dot(x, v))
+
+
+# dot_sigmoid = np.vectorize(slow_sigmoid)
+
+
+def eval_classifier(x, advice, y, predictions, t):
     P = sum(y)
     N = sum(1 - y)
     TP = 0
@@ -48,7 +57,7 @@ def eval_classifier(x, advice, y, evaluator, t):
     TN = 0
     FN = 0
     for i in range(len(y)):
-        if evaluator(x_1[i, :], advice[i, :]) >= t:
+        if predictions[i] >= t:
             if y[i] == 1:
                 TP += 1
             else:

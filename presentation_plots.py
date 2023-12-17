@@ -52,7 +52,7 @@ fig.tight_layout()
 plt.savefig("yan-yan-et-al-expert-bias.png")
 
 
-a, v = EM(x, advice, 1e-3)
+a, v = yan_yan_et_al(x, advice, 1e-3, 0)
 print(a, v)
 
 plt.figure()
