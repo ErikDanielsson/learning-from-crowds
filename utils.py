@@ -18,12 +18,12 @@ def expert_advice(y, x, w):
         if yi == 1:
             for j in range(M):
                 advice[i, j] = 1 * (
-                    np.random.uniform(0, 1) <= dot_sigmoid(x[i, :], w[j, :])
+                    np.random.uniform(0, 1) <= slow_sigmoid(x[i, :], w[j, :])
                 )
         else:
             for j in range(M):
                 advice[i, j] = 1 * (
-                    np.random.uniform(0, 1) >= dot_sigmoid(x[i, :], w[j, :])
+                    np.random.uniform(0, 1) >= slow_sigmoid(x[i, :], w[j, :])
                 )
     return advice
 
@@ -34,6 +34,40 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
+vsigmoid = np.vectorize(sigmoid)
+
+
 # We define v = [w \gamma]
-def dot_sigmoid(x, v):
+def slow_sigmoid(x, v):
     return sigmoid(np.dot(x, v))
+
+
+def dot_sigmoid(x, v):
+    return vsigmoid(np.dot(x, v))
+
+
+# dot_sigmoid = np.vectorize(slow_sigmoid)
+
+
+def eval_classifier(x, advice, y, predictions, t):
+    P = sum(y)
+    N = sum(1 - y)
+    TP = 0
+    FP = 0
+    TN = 0
+    FN = 0
+    for i in range(len(y)):
+        if predictions[i] >= t:
+            if y[i] == 1:
+                TP += 1
+            else:
+                FP += 1
+        else:
+            if y[i] == 1:
+                FN += 1
+            else:
+                TN += 1
+    # prec = TP / (TP + FP)
+    # rec = TP / (TP + FN)
+    # F_score = 2 * prec * rec / (prec + rec)
+    return TP / P, FP / N

@@ -45,7 +45,7 @@ def H(w, X, N):
     )
 
 
-def EM(X, y, epsilon_tot, epsilon_log):
+def raykar_et_al(X, y, epsilon_tot, epsilon_log):
     N, n_features = X.shape
     R = y.shape[1]
     w = np.zeros(n_features)
@@ -97,6 +97,7 @@ def EM(X, y, epsilon_tot, epsilon_log):
     return alpha, beta, w
 
 
+"""
 w_real = np.array([1, -1])
 x, y = generate_data(1000, w_real)
 advice = expert_advice(y, [0.7, 0.9, 0.7], [0.8, 0.7, 0.8])
@@ -125,3 +126,4 @@ axs[1].set_ylabel("Feature 2")
 
 plt.suptitle("True Labels vs. Predicted Labels using EM")
 plt.show()
+"""
