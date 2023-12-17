@@ -43,17 +43,17 @@ def s_log_loss(sigma, y):
 vec_log_loss = np.vectorize(s_log_loss)
 
 
-def log_loss(w, y, x, sigma):
+def log_loss(w, y, x):
     sigma = dot_sigmoid(x, w)
     return -sum(vec_log_loss(sigma, y))
 
 
-def gradient_log_loss(w, y, x, sigma):
+def gradient_log_loss(w, y, x):
     s = dot_sigmoid(x, w)
     return -np.dot(x.T, y - s)
 
 
-def hessian_log_loss(w, y, x, sigma):
+def hessian_log_loss(w, y, x):
     s = dot_sigmoid(x, w)
     S = np.diag(np.multiply(s, 1 - s))
     return np.linalg.multi_dot((x.T, S, x))
