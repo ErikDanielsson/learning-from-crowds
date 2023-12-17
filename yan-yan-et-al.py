@@ -36,17 +36,27 @@ def calc_p_tilde_tree(xi, yi, v, a):
     return p * z_factor / (p * z_factor + q * (1 - z_factor))
 
 
-def log_loss(w, y, x):
-    s = 0
-    for i in range(len(y)):
-        sigma = dot_sigmoid(x[i, :], w)
-        s += y[i] * np.log(sigma) + (1 - y[i]) * np.log(1 - sigma)
-    return -s
+def s_log_loss(sigma, y):
+    return y * np.log(sigma) + (1 - y) * np.log(1 - sigma)
 
 
-def gradient_log_loss(w, y, x):
-    # x_1 = np.hstack((x, np.ones((x.shape[0], 1))))
-    return -sum(x[i, :] * (y[i] - dot_sigmoid(x[i, :], w)) for i in range(len(y)))
+vec_log_loss = np.vectorize(s_log_loss)
+
+
+def log_loss(w, y, x, sigma):
+    sigma = dot_sigmoid(x, w)
+    return -sum(vec_log_loss(sigma, y))
+
+
+def gradient_log_loss(w, y, x, sigma):
+    s = dot_sigmoid(x, w)
+    return -np.dot(x.T, y - s)
+
+
+def hessian_log_loss(w, y, x, sigma):
+    s = dot_sigmoid(x, w)
+    S = np.diag(np.multiply(s, 1 - s))
+    return np.linalg.multi_dot((x.T, S, x))
 
 
 def soft_lab(yit, p_tilde):
