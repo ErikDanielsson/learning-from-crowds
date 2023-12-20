@@ -2,6 +2,7 @@ import numpy as np
 import scipy.optimize
 
 from utils import dot_sigmoid
+from logistic_regression import log_reg
 
 
 def s_log_loss(sigma, y):
@@ -35,12 +36,22 @@ def majority(X, advice, sigma):
     N, D = X.shape
     X_1 = np.hstack((X, np.ones((N, 1))))
     vote = majority_opinion(advice)
-    w = scipy.optimize.minimize(
-        log_loss,
-        np.random.rand(D + 1),
-        args=(vote, X_1, sigma),
-        jac=gradient_log_loss,
-        hess=hessian_log_loss,
-        method="trust-exact",
-    ).x
+    w = log_reg(vote, X_1, 0, D).x
+    return w
+
+
+def true_classifier(X, y, sigma):
+    N, D = X.shape
+    X_1 = np.hstack((X, np.ones((N, 1))))
+    w = log_reg(y, X_1, 0, D).x
+    return w
+
+
+def concat(X, y, sigma):
+    N, D = X.shape
+    N, n_experts = y.shape
+    X_1 = np.hstack((X, np.ones((N, 1))))
+    X = np.vstack([X_1 for _ in range(n_experts)])
+    h = np.hstack([y[:, i] for i in range(n_experts)])
+    w = log_reg(h, X, 0, D).x
     return w

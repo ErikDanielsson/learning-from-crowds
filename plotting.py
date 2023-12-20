@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import *
+from src.utils import *
 
 
 def plot_cont_datapoints(

@@ -1,7 +1,6 @@
 import numpy as np
-import scipy.optimize
 from utils import *
-from multiprocessing import Pool
+from logistic_regression import log_reg
 
 
 def yit_estimate(yit, xi, v):
@@ -18,29 +17,6 @@ def calc_p_tilde(xi, yi, v, a):
         p *= e
         q *= f
     return p * z_factor / (p * z_factor + q * (1 - z_factor))
-
-
-def s_log_loss(sigma, y):
-    return y * np.log(sigma) + (1 - y) * np.log(1 - sigma)
-
-
-vec_log_loss = np.vectorize(s_log_loss)
-
-
-def log_loss(w, y, x, sigma):
-    sigma = dot_sigmoid(x, w)
-    return -sum(vec_log_loss(sigma, y))
-
-
-def gradient_log_loss(w, y, x, sigma):
-    s = dot_sigmoid(x, w)
-    return -np.dot(x.T, y - s)
-
-
-def hessian_log_loss(w, y, x, sigma):
-    s = dot_sigmoid(x, w)
-    S = np.diag(np.multiply(s, 1 - s))
-    return np.linalg.multi_dot((x.T, S, x))
 
 
 def soft_lab(yit, p_tilde):
@@ -87,7 +63,7 @@ def yan_yan_et_al(x, y, epsilon_tot, sigma):
     ls = []
 
     x_1 = np.hstack((x, np.ones((N, 1))))
-    while np.linalg.norm(a - a_new) > epsilon_tot:
+    while abs(l_prev - l_curr) > epsilon_tot:
         # print(f"diff: {l_curr - l_prev}")
         l_prev = l_curr
         a = a_new
@@ -104,42 +80,25 @@ def yan_yan_et_al(x, y, epsilon_tot, sigma):
                 soft_label[i, t] = soft_lab(yi[t], p_ti)
 
         # M-step
-        res = scipy.optimize.minimize(
-            log_loss,
-            np.random.randn(D + 1),
-            jac=gradient_log_loss,
-            hess=hessian_log_loss,
-            args=(p_tilde, x_1, sigma),
-            method="trust-exact",
-        )
-        print(np.arccos(np.dot(a_new, a) / np.linalg.norm(a_new) / np.linalg.norm(a)))
+        res = log_reg(p_tilde, x_1, 0, D)
         a_new = res.x
-        a_new /= a_new[0]
         if res.success:
             pass
         else:
             print("fail a")
-            print(res)
+            # print(res)
 
         for t in range(T):
-            res = scipy.optimize.minimize(
-                log_loss,
-                np.random.randn(D + 1),
-                jac=gradient_log_loss,
-                hess=hessian_log_loss,
-                args=(soft_label[:, t], x_1, sigma),
-                method="trust-exact",
-            )
+            res = log_reg(soft_label[:, t], x_1, sigma, D)
             v[t, :] = res.x
             if res.success:
                 pass
             else:
                 print("fail v")
-                print(res)
+                # print(res)
 
         l_curr = real_likelihood(a_new, v, x_1, y, N, T)
         ls.append(l_curr)
-        print(np.linalg.norm(a - a_new))
-        # print(a_new)
+        print(l_curr)
 
     return a, v, ls

@@ -29,8 +29,6 @@ def expert_advice(y, x, w):
 
 
 def sigmoid(x):
-    if x < -500:
-        return 0
     return 1 / (1 + np.exp(-x))
 
 
@@ -49,7 +47,7 @@ def dot_sigmoid(x, v):
 # dot_sigmoid = np.vectorize(slow_sigmoid)
 
 
-def eval_classifier(x, advice, y, predictions, t):
+def eval_classifier(y, predictions, t):
     P = sum(y)
     N = sum(1 - y)
     TP = 0
@@ -67,7 +65,4 @@ def eval_classifier(x, advice, y, predictions, t):
                 FN += 1
             else:
                 TN += 1
-    # prec = TP / (TP + FP)
-    # rec = TP / (TP + FN)
-    # F_score = 2 * prec * rec / (prec + rec)
     return TP / P, FP / N
