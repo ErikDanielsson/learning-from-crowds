@@ -1,4 +1,4 @@
-from src.yan_yan_et_al import *
+from yan_yan_et_al import *
 from plotting import *
 
 np.random.seed(1234)

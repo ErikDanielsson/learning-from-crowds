@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.optimize
 from utils import *
 from logistic_regression import log_reg
 
@@ -50,6 +51,7 @@ def posterior(x, y, a, v):
 
 
 def yan_yan_et_al(x, y, epsilon_tot, sigma):
+    print(f"YAN YAN {sigma}")
     N, D = x.shape
     N, T = y.shape
     p_tilde = np.random.rand(N)
@@ -58,12 +60,12 @@ def yan_yan_et_al(x, y, epsilon_tot, sigma):
     v[:, -1] = 10
     a = np.zeros(D + 1)
     a_new = np.random.randn(D + 1)
-    l_prev = -np.inf
-    l_curr = 0
+    l_prev = -1e11
+    l_curr = -1e10
     ls = []
 
     x_1 = np.hstack((x, np.ones((N, 1))))
-    while abs(l_prev - l_curr) > epsilon_tot:
+    while l_curr - l_prev > epsilon_tot:
         # print(f"diff: {l_curr - l_prev}")
         l_prev = l_curr
         a = a_new
@@ -80,25 +82,16 @@ def yan_yan_et_al(x, y, epsilon_tot, sigma):
                 soft_label[i, t] = soft_lab(yi[t], p_ti)
 
         # M-step
-        res = log_reg(p_tilde, x_1, 0, D)
+        res = log_reg(p_tilde, x_1, sigma, D)
         a_new = res.x
-        if res.success:
-            pass
-        else:
-            print("fail a")
-            # print(res)
-
         for t in range(T):
-            res = log_reg(soft_label[:, t], x_1, sigma, D)
+            res = log_reg(soft_label[:, t], x_1, 0, D)
             v[t, :] = res.x
-            if res.success:
-                pass
-            else:
-                print("fail v")
-                # print(res)
 
         l_curr = real_likelihood(a_new, v, x_1, y, N, T)
         ls.append(l_curr)
-        print(l_curr)
+        # print(l_curr, np.linalg.norm(a_new))
+        # print(a_new)
+        # print(v)
 
     return a, v, ls
