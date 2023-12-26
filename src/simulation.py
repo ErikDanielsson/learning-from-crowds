@@ -6,7 +6,7 @@ from sklearn.model_selection import KFold
 import data_gen
 from utils import dot_sigmoid, eval_classifier
 from yan_yan_et_al import yan_yan_et_al
-from hyper_opt import optimize_reg_yan_yan
+from hyper_opt import optimize_reg_yan_yan, optimize_tree
 from majority import true_classifier, concat, majority
 
 """
