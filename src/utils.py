@@ -55,7 +55,7 @@ def eval_classifier(y, predictions, t):
     TN = 0
     FN = 0
     for i in range(len(y)):
-        if predictions[i] >= t:
+        if predictions[i] > t:
             if y[i] == 1:
                 TP += 1
             else:
