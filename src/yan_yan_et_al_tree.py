@@ -14,7 +14,7 @@ def calc_p_tilde_tree(xi, yi, v, a):
     p = 1
     q = 1
     # something like this:
-    z_factor = a.predict_proba([xi])[0, 1]
+    z_factor = 1 - a.predict_proba([xi])[0, 0]
     for t in range(len(yi)):
         e = yit_estimate(yi[t], xi, v[t, :])
         f = 1 - e
@@ -34,7 +34,7 @@ def real_likelihood_tree(a, v, x, y, N, T):
         yi = y[i, :]
         for t in range(T):
             yit = yi[t]
-            zf = a.predict_proba([xi])[0, 1]
+            zf = 1 - a.predict_proba([xi])[0, 0]
             yf = yit_estimate(yit, xi, v[t, :])
             s += np.log(zf * yf + (1 - zf) * (1 - yf))
     return s
@@ -55,7 +55,7 @@ def yan_yan_tree(x, y, epsilon_tot, depth, ccp_alpha):
     x_1 = np.hstack((x, np.ones((N, 1))))
     # a = tree.DecisionTreeClassifier(criterion="entropy", random_state=10, max_depth=5)
     # a.fit(x_1, y[:, 0])
-    a_new = tree.DecisionTreeClassifier(max_depth=depth, ccp_alpha=ccp_alpha)
+    a_new = tree.DecisionTreeClassifier(max_depth=depth)
     a_new.fit(x_1, [int(yi) for yi in np.round(np.mean(y, axis=1))])
 
     x_dup = []
@@ -86,7 +86,7 @@ def yan_yan_tree(x, y, epsilon_tot, depth, ccp_alpha):
                 (p_til_dup, np.ones(num), np.zeros(duplications - num))
             )
 
-        a_new = tree.DecisionTreeClassifier(max_depth=depth, ccp_alpha=ccp_alpha)
+        a_new = tree.DecisionTreeClassifier(max_depth=depth)
         a_new.fit(x_dup, p_til_dup)
 
         for t in range(T):

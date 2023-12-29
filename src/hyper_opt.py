@@ -30,7 +30,7 @@ def optimize_tree(X, advice, epsilon):
     max_depth = int(np.log2(X.shape[0]))
     kf = KFold(n_splits=n_folds, shuffle=False)  # , random_state=random_seed)
     folds = list(kf.split(X))
-    alphas = np.exp(-10 * np.linspace(0, 1, 5))
+    alphas = [0.0]  # np.exp(-10 * np.linspace(0, 1, 5))
     likelihoods = np.zeros(len(alphas))
     for i, (train_index, test_index) in enumerate(folds):
         X_train = X[train_index, :]
@@ -40,6 +40,7 @@ def optimize_tree(X, advice, epsilon):
         N, T = advice_test.shape
         X_test = np.hstack((X_test, np.ones((N, 1))))
         for i, alpha in enumerate(alphas):
+            print(alpha)
             a, v, _ = yan_yan_tree(X_train, advice_train, epsilon, max_depth, alpha)
             print(
                 a.get_depth(),

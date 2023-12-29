@@ -9,6 +9,7 @@ from utils import dot_sigmoid, eval_classifier
 from yan_yan_et_al import yan_yan_et_al
 from hyper_opt import optimize_reg_yan_yan, optimize_tree
 from majority import true_classifier, concat, majority
+from yan_yan_et_al_tree import yan_yan_tree
 
 """
 from yan_yan_et_al import yan_yan_et_al
@@ -23,7 +24,7 @@ n_samples = 1000
 label_noise = 0.1
 n_experts = 5
 expert_hplane_dist = 0.5
-mis_clas_sense = 0.1
+mis_clas_sense = 1
 epsilon_yan_yan = 1e-2
 n_folds = 5
 n_roc_samples = 10000
@@ -77,9 +78,11 @@ advice_train = advice[train_index]
 y_train = y[train_index]
 
 ls = np.linspace(0.1, 1, 10)
-a_tree, v_tree = optimize_tree(X_train, advice_train, epsilon_yan_yan)
+a_tree, v_tree, _ = yan_yan_tree(
+    X_train, advice_train, epsilon_yan_yan, 6, 0
+)  # optimize_tree(X_train, advice_train, epsilon_yan_yan)
 
-# a_reg, v_reg = optimize_reg_yan_yan(X_train, advice_train, ls, epsilon_yan_yan)
+a_reg, v_reg = optimize_reg_yan_yan(X_train, advice_train, ls, epsilon_yan_yan)
 a, v, l = yan_yan_et_al(X_train, advice_train, epsilon_yan_yan, 0)
 w_concat = concat(X_train, advice_train, 0)
 w_true = true_classifier(X_train, y_train, 0)
@@ -100,8 +103,8 @@ concat_votes = dot_sigmoid(X_test, w_concat)
 for j, t in enumerate(classification_thresholds):
     TPR, FPR = eval_classifier(y_test, yan_yan_votes_logistically, t)
     roc_EM_algorithm[i, j, :] += (FPR, TPR)
-    # TPR, FPR = eval_classifier(y_test, yan_yan_votes_logistically_reg, t)
-    # roc_EM_algorithm_reg[i, j, :] += (FPR, TPR)
+    TPR, FPR = eval_classifier(y_test, yan_yan_votes_logistically_reg, t)
+    roc_EM_algorithm_reg[i, j, :] += (FPR, TPR)
     TPR, FPR = eval_classifier(y_test, yan_yan_votes_arboraly, t)
     roc_EM_algorithm_tree[i, j, :] += (FPR, TPR)
     TPR, FPR = eval_classifier(y_test, majority_votes, t)
@@ -152,9 +155,9 @@ plt.show()
 
 i = 0
 plt.plot(roc_EM_algorithm[i, :, 0], roc_EM_algorithm[i, :, 1], label="EM")
-# plt.plot(
-#     roc_EM_algorithm_reg[i, :, 0], roc_EM_algorithm_reg[i, :, 1], label="EM l = 0.1"
-# )
+plt.plot(
+    roc_EM_algorithm_reg[i, :, 0], roc_EM_algorithm_reg[i, :, 1], label="EM l = 0.1"
+)
 plt.plot(
     roc_EM_algorithm_tree[i, :, 0], roc_EM_algorithm_tree[i, :, 1], label="EM tree"
 )
