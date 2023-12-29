@@ -93,7 +93,7 @@ X_test = hsphere[test_index]
 X_test = np.concatenate((X_test, np.ones((X_test.shape[0], 1))), axis=1)
 advice_test = advice[test_index]
 yan_yan_votes_logistically = dot_sigmoid(X_test, a)
-# yan_yan_votes_logistically_reg = dot_sigmoid(X_test, a_reg)
+yan_yan_votes_logistically_reg = dot_sigmoid(X_test, a_reg)
 yan_yan_votes_arboraly = a_tree.predict_proba(X_test)[:, 1]
 print(yan_yan_votes_arboraly)
 majority_votes = dot_sigmoid(X_test, w_majority)
