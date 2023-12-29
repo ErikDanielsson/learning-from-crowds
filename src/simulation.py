@@ -20,10 +20,10 @@ from plotting import create_color_annotator
 """
 
 dims = 12
-n_samples = 1000
+n_samples = 10000
 label_noise = 0.1
 n_experts = 5
-expert_hplane_dist = 0.5
+expert_hplane_dist = 0.7
 mis_clas_sense = 1
 epsilon_yan_yan = 1e-2
 n_folds = 5
@@ -82,7 +82,7 @@ a_tree, v_tree, _ = yan_yan_tree(
     X_train, advice_train, epsilon_yan_yan, 6, 0
 )  # optimize_tree(X_train, advice_train, epsilon_yan_yan)
 
-a_reg, v_reg = optimize_reg_yan_yan(X_train, advice_train, ls, epsilon_yan_yan)
+a_reg, v_reg, lamd = optimize_reg_yan_yan(X_train, advice_train, ls, epsilon_yan_yan)
 a, v, l = yan_yan_et_al(X_train, advice_train, epsilon_yan_yan, 0)
 w_concat = concat(X_train, advice_train, 0)
 w_true = true_classifier(X_train, y_train, 0)
@@ -95,7 +95,6 @@ advice_test = advice[test_index]
 yan_yan_votes_logistically = dot_sigmoid(X_test, a)
 yan_yan_votes_logistically_reg = dot_sigmoid(X_test, a_reg)
 yan_yan_votes_arboraly = a_tree.predict_proba(X_test)[:, 1]
-print(yan_yan_votes_arboraly)
 majority_votes = dot_sigmoid(X_test, w_majority)
 true_votes = dot_sigmoid(X_test, w_true)
 concat_votes = dot_sigmoid(X_test, w_concat)
@@ -154,12 +153,12 @@ plt.show()
 
 
 i = 0
-plt.plot(roc_EM_algorithm[i, :, 0], roc_EM_algorithm[i, :, 1], label="EM")
+plt.plot(roc_EM_algorithm[i, :, 0], roc_EM_algorithm[i, :, 1], label="Yan Yan et al. (LR)")
 plt.plot(
-    roc_EM_algorithm_reg[i, :, 0], roc_EM_algorithm_reg[i, :, 1], label="EM l = 0.1"
+     roc_EM_algorithm_reg[i, :, 0], roc_EM_algorithm_reg[i, :, 1], label=fr"Yan Yan et al. (LR reg.) $\lambda={lamd}$"
 )
 plt.plot(
-    roc_EM_algorithm_tree[i, :, 0], roc_EM_algorithm_tree[i, :, 1], label="EM tree"
+    roc_EM_algorithm_tree[i, :, 0], roc_EM_algorithm_tree[i, :, 1], label="Yan Yan et al. (tree)"
 )
 plt.plot(roc_majority[i, :, 0], roc_majority[i, :, 1], label="Majority")
 plt.plot(roc_concat[i, :, 0], roc_concat[i, :, 1], label="Concat")
