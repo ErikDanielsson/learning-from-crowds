@@ -55,7 +55,7 @@ def yan_yan_tree(x, y, epsilon_tot, depth, ccp_alpha):
     x_1 = np.hstack((x, np.ones((N, 1))))
     # a = tree.DecisionTreeClassifier(criterion="entropy", random_state=10, max_depth=5)
     # a.fit(x_1, y[:, 0])
-    a_new = tree.DecisionTreeClassifier(max_depth=depth, min_samples_leaf=5)
+    a_new = tree.DecisionTreeClassifier(max_depth=depth)
     a_new.fit(x_1, [int(yi) for yi in np.round(np.mean(y, axis=1))])
 
     x_dup = []
@@ -86,7 +86,7 @@ def yan_yan_tree(x, y, epsilon_tot, depth, ccp_alpha):
                 (p_til_dup, np.ones(num), np.zeros(duplications - num))
             )
 
-        a_new = tree.DecisionTreeClassifier(max_depth=depth, min_samples_leaf=5)
+        a_new = tree.DecisionTreeClassifier(max_depth=depth)
         a_new.fit(x_dup, p_til_dup)
 
         for t in range(T):
